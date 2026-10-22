@@ -20,7 +20,8 @@ import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 @Service
 public class AICoachServiceImpl implements AICoachService {
 
@@ -55,10 +56,24 @@ public class AICoachServiceImpl implements AICoachService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        List<TaskEntry> tasks = taskEntryRepository.findByUser(user);
+        List<TaskEntry> allTasks = taskEntryRepository.findByUser(user);
 
-        ProgressResponseDTO progress = progressService.calculateProgress(tasks);
-        String prompt = buildPrompt(progress, tasks);
+        ProgressResponseDTO progress =
+                progressService.calculateProgress(allTasks);
+
+        List<TaskEntry> recentTasks = taskEntryRepository.findByUser(
+                user,
+                PageRequest.of(
+                        0,
+                        30,
+                        Sort.by(
+                                Sort.Order.desc("date"),
+                                Sort.Order.desc("id")
+                        )
+                )
+        ).getContent();
+
+        String prompt = buildPrompt(progress, recentTasks);
 
         String response;
 
