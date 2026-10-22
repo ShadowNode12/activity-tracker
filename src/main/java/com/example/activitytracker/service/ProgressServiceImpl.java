@@ -1,3 +1,4 @@
+
 package com.example.activitytracker.service;
 
 import org.springframework.stereotype.Service;
@@ -23,8 +24,9 @@ public class ProgressServiceImpl implements ProgressService {
     private final TaskEntryRepository taskEntryRepository;
     private final UserRepository userRepository;
 
-    public ProgressServiceImpl(TaskEntryRepository taskEntryRepository,
-                               UserRepository userRepository) {
+    public ProgressServiceImpl(
+            TaskEntryRepository taskEntryRepository,
+            UserRepository userRepository) {
         this.taskEntryRepository = taskEntryRepository;
         this.userRepository = userRepository;
     }
@@ -41,6 +43,12 @@ public class ProgressServiceImpl implements ProgressService {
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         List<TaskEntry> tasks = taskEntryRepository.findByUser(user);
+
+        return calculateProgress(tasks);
+    }
+
+    @Override
+    public ProgressResponseDTO calculateProgress(List<TaskEntry> tasks) {
 
         long totalTasks = tasks.size();
         long completedTasks = 0;

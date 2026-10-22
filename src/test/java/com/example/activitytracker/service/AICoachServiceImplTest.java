@@ -11,6 +11,7 @@ import com.example.activitytracker.repository.TaskEntryRepository;
 import com.example.activitytracker.repository.UserRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.mockito.ArgumentMatchers.anyList;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -68,7 +69,7 @@ class AICoachServiceImplTest {
         when(taskEntryRepository.findByUser(user))
                 .thenReturn(List.of());
 
-        when(progressService.getProgress())
+        when(progressService.calculateProgress(anyList()))
                 .thenReturn(new ProgressResponseDTO());
     }
 

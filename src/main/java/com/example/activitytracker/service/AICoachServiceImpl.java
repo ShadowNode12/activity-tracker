@@ -57,7 +57,7 @@ public class AICoachServiceImpl implements AICoachService {
 
         List<TaskEntry> tasks = taskEntryRepository.findByUser(user);
 
-        ProgressResponseDTO progress = progressService.getProgress();
+        ProgressResponseDTO progress = progressService.calculateProgress(tasks);
         String prompt = buildPrompt(progress, tasks);
 
         String response;
