@@ -1,3 +1,4 @@
+
 package com.example.activitytracker.service;
 
 import com.example.activitytracker.DTO.AICoachResponseDTO;
@@ -14,11 +15,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.errors.ApiException;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,9 +35,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -172,8 +176,8 @@ class AICoachServiceImplTest {
 
         when(apiException.code()).thenReturn(400);
         when(apiException.getMessage()).thenReturn(
-                "400 INVALID_ARGUMENT. API key not valid. " +
-                "Details: {\"reason\":\"API_KEY_INVALID\"}"
+                "400 INVALID_ARGUMENT. API key not valid. "
+                        + "Details: {\"reason\":\"API_KEY_INVALID\"}"
         );
 
         when(geminiClientService.generateContent(anyString()))
@@ -212,8 +216,8 @@ class AICoachServiceImplTest {
         when(geminiClientService.generateContent(anyString()))
                 .thenReturn(
                         "{\"summary\":\"Summary\",\"feedback\":\"Feedback\","
-                        + "\"suggestion\":\"Suggestion\","
-                        + "\"motivation\":\"Motivation\"}"
+                                + "\"suggestion\":\"Suggestion\","
+                                + "\"motivation\":\"Motivation\"}"
                 );
 
         when(objectMapper.readValue(
@@ -226,13 +230,13 @@ class AICoachServiceImplTest {
         // Progress calculation must receive the full task history.
         verify(progressService).calculateProgress(allTasks);
 
-        // Gemini must receive only the bounded task history.
+        // Gemini must receive the bounded task history.
         verify(geminiClientService).generateContent(argThat(prompt ->
                 prompt.contains("Recent task")
                         && !prompt.contains("Older task")
         ));
 
-        // Verify the page size and deterministic sorting.
+        // Verify page size and deterministic sorting.
         verify(taskEntryRepository).findByUser(
                 eq(user),
                 argThat((Pageable pageable) ->
@@ -245,6 +249,73 @@ class AICoachServiceImplTest {
                                         .getOrderFor("id").getDirection()
                                         == Sort.Direction.DESC
                 )
+        );
+    }
+
+    @Test
+    void shouldKeepPromptWithinCharacterLimit() throws Exception {
+
+        List<TaskEntry> tasks = new ArrayList<>();
+
+        for (int i = 0; i < 30; i++) {
+            TaskEntry task = new TaskEntry();
+            task.setDate(LocalDate.now().minusDays(i));
+            task.setTaskDescription(
+                    "Task " + i + " " + "A".repeat(490)
+            );
+            task.setCompleted(false);
+            tasks.add(task);
+        }
+
+        when(taskEntryRepository.findByUser(user))
+                .thenReturn(tasks);
+
+        when(taskEntryRepository.findByUser(
+                eq(user),
+                any(Pageable.class)
+        )).thenReturn(new PageImpl<>(tasks));
+
+        when(progressService.calculateProgress(tasks))
+                .thenReturn(new ProgressResponseDTO());
+
+        when(geminiClientService.generateContent(anyString()))
+                .thenReturn("""
+                        {
+                          "summary": "Summary",
+                          "feedback": "Feedback",
+                          "suggestion": "Suggestion",
+                          "motivation": "Motivation"
+                        }
+                        """);
+
+        when(objectMapper.readValue(
+                anyString(),
+                eq(AICoachResponseDTO.class)
+        )).thenReturn(new AICoachResponseDTO());
+
+        aiCoachService.getCoaching();
+
+        ArgumentCaptor<String> promptCaptor =
+                ArgumentCaptor.forClass(String.class);
+
+        verify(geminiClientService)
+                .generateContent(promptCaptor.capture());
+
+        String prompt = promptCaptor.getValue();
+
+        assertTrue(
+                prompt.length() <= 12_000,
+                "Prompt must not exceed 12,000 characters"
+        );
+
+        assertTrue(
+                prompt.contains("Task 0"),
+                "The newest task should be included"
+        );
+
+        assertFalse(
+                prompt.contains("Task 29"),
+                "Older tasks should be excluded when the limit is reached"
         );
     }
 }
