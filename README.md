@@ -1,60 +1,109 @@
 # Daily Activity Tracker 🚀
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Java-24-orange?style=for-the-badge&logo=openjdk" alt="Java 24">
-  <img src="https://img.shields.io/badge/Spring_Boot-4.x-brightgreen?style=for-the-badge&logo=springboot" alt="Spring Boot 4.x">
+  <img src="https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=openjdk" alt="Java 21 target">
+  <img src="https://img.shields.io/badge/Spring_Boot-4.1.1-brightgreen?style=for-the-badge&logo=springboot" alt="Spring Boot 4.1.1">
   <img src="https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql" alt="MySQL 8.0">
   <img src="https://img.shields.io/badge/Security-JWT_%26_BCrypt-red?style=for-the-badge&logo=jsonwebtokens" alt="JWT and BCrypt">
   <img src="https://img.shields.io/badge/AI-Google_Gemini-purple?style=for-the-badge&logo=google" alt="Google Gemini">
+  <img src="https://img.shields.io/badge/Build-Maven-C71A36?style=for-the-badge&logo=apachemaven" alt="Maven">
 </p>
 
-Daily Activity Tracker is a personal productivity application backend designed to help users record daily tasks, track completion progress, view daily motivational quotes, and receive AI-generated productivity coaching.
+Daily Activity Tracker is a productivity application backend built with Java and Spring Boot. It allows users to manage daily tasks, monitor productivity, view motivational quotes, and receive AI-generated coaching based on their progress.
 
-The project demonstrates layered backend development with Spring Boot, secure authentication, input validation, database persistence, and REST API design.
+The project focuses on backend engineering practices, including stateless authentication, database-backed persistence, input validation, centralized exception handling, automated testing, and external AI integration.
 
 ---
 
 ## 🏛️ Core Architectural Highlights
 
-* **Server-Side AI Integration:** The Spring Boot backend calls the Google Gemini API, builds prompts from the user's task history and progress, and deserializes the response into a structured DTO. The API key stays on the server rather than being exposed in the frontend.
-* **Stateless Security:** Uses JSON Web Tokens (JWT) for authentication and BCrypt password hashing. Protected endpoints use the authenticated user's identity when accessing personal task data.
-* **Centralized Exception Handling:** Uses `@ControllerAdvice` to handle application exceptions and return consistent JSON error responses for supported cases.
-* **Input Validation:** Uses Jakarta Bean Validation annotations such as `@Valid`, `@NotBlank`, and `@Email` to validate incoming request data.
+- **Layered Architecture:** Separates controllers, services, repositories, entities, DTOs, security, and exception handling.
+- **Stateless Authentication:** Uses JSON Web Tokens (JWT) for authentication and BCrypt for password hashing.
+- **User-Specific Data Access:** Retrieves personal task data using the authenticated user's identity and applies ownership checks to task operations.
+- **Server-Side AI Integration:** Calls Google Gemini from the backend, keeping the API key out of frontend code.
+- **Bounded AI Context:** Limits detailed task history to the 30 most recent entries and applies a 12,000-character prompt budget to control input size.
+- **Centralized Exception Handling:** Uses `@ControllerAdvice` to return structured JSON errors for supported application exceptions.
+- **Database Migrations:** Uses Flyway to version and apply database schema changes.
+- **Automated Testing:** Uses JUnit and Mockito to test service behavior, authentication utilities, error handling, and AI-related logic.
 
 ---
 
 ## 🚀 Features
 
 ### Implemented
-* **User Authentication:** Signup and login with BCrypt password hashing, JWT authentication, and duplicate email handling (`409 Conflict`).
-* **Daily Task Management:** CRUD operations for tasks associated with dates and completion statuses, with ownership checks to prevent users from accessing other users' tasks.
-* **Progress Analytics:** Calculates total tasks, completion rates, current streaks, and daily metrics.
-* **Daily Quote Engine:** Startup logic and scheduled jobs maintain a daily quote shared across users.
-* **AI Productivity Coach:** Integrates Google Gemini to analyze task history and return structured feedback (`summary`, `feedback`, `suggestion`, `motivation`).
 
-### Planned / In Progress
-* Dedicated AI error handling for rate limits, timeouts, and malformed upstream responses.
-* Swagger UI / OpenAPI documentation.
-* Automated unit and integration tests.
-* React frontend integration and cloud deployment.
+- **User Authentication**
+  - User signup and login.
+  - BCrypt password hashing.
+  - JWT generation and authentication.
+  - Duplicate email handling with `409 Conflict`.
+
+- **Daily Task Management**
+  - Create, retrieve, update, and delete tasks.
+  - Store task dates, descriptions, and completion status.
+  - Enforce user-specific task access.
+
+- **Progress Analytics**
+  - Calculate total and completed tasks.
+  - Calculate completion rate and daily progress.
+  - Track the current productivity streak.
+
+- **Daily Quote Engine**
+  - Store and retrieve motivational quotes.
+  - Maintain a daily quote through scheduled processing.
+
+- **AI Productivity Coach**
+  - Integrate Google Gemini through the backend.
+  - Generate structured coaching responses containing `summary`, `feedback`, `suggestion`, and `motivation`.
+  - Use aggregate progress statistics and recent task history to build the prompt.
+  - Handle Gemini rate limits, authentication/configuration errors, service failures, and malformed responses.
+  - Bound detailed task history and prompt size to help control input usage.
+
+- **Testing and Reliability**
+  - Automated tests for authentication, task services, progress calculations, and AI coaching.
+  - Mocked dependencies to test error scenarios without requiring real Gemini API calls.
+  - A passing test suite at the current development checkpoint.
+
+### In Progress
+
+- **AI Usage Quotas**
+  - MySQL tables and JPA entities for per-user and global daily usage.
+  - Repository interfaces and quota exception handling.
+  - Configurable daily quota limits.
+  - Atomic quota reservations and enforcement under concurrent requests are not yet complete.
+
+### Planned
+
+- React frontend integration.
+- Swagger UI / OpenAPI documentation.
+- Production deployment and cloud database configuration.
+- Additional integration and concurrency tests for AI quotas.
 
 ---
 
 ## 🛠️ Technology Stack
 
-* **Language:** Java (confirm the project version in `pom.xml`)
-* **Framework:** Spring Boot (confirm the project version in `pom.xml`), Spring Web
-* **Security:** Spring Security, JWT, BCrypt
-* **Database & Persistence:** MySQL, Spring Data JPA / Hibernate
-* **Validation & Processing:** Jakarta Bean Validation, Jackson
-* **AI Integration:** Google GenAI Java SDK with Gemini
-* **Build Tool:** Maven
+| Category | Technology |
+|---|---|
+| Language | Java 21 compilation target |
+| Framework | Spring Boot 4.1.1 |
+| Web | Spring Web, REST APIs |
+| Security | Spring Security, JWT, BCrypt |
+| Database | MySQL 8.0 |
+| Persistence | Spring Data JPA, Hibernate |
+| Schema migrations | Flyway |
+| Validation | Jakarta Bean Validation |
+| JSON processing | Jackson |
+| AI integration | Google GenAI Java SDK with Gemini |
+| Testing | JUnit, Mockito, Spring Boot Test |
+| Build tool | Maven |
+| API testing | Postman |
+
+The project has also been tested with Java 24 as the runtime while compiling against the Java 21 target.
 
 ---
 
 ## 📁 Project Structure
-
-The backend uses a layered structure to separate API controllers, business logic, persistence, security, and configuration:
 
 ```text
 src/main/java/com/example/activitytracker/
@@ -62,118 +111,99 @@ src/main/java/com/example/activitytracker/
 ├── controller/      # REST API controllers
 ├── DTO/             # Request and response data-transfer objects
 ├── exception/       # Custom exceptions and global exception handling
-├── model/           # JPA entities
+├── model/           # JPA entities, including AI usage records
 ├── repository/      # Spring Data JPA repositories
-├── security/        # JWT authentication filter and entry point
-├── service/         # Service interfaces and implementations
+├── security/        # JWT authentication filter and security configuration
+├── service/         # Business logic and service interfaces
 └── util/            # JWT utilities
+
+src/main/resources/
+├── application.properties
+└── db/migration/    # Versioned Flyway SQL migrations
 ```
 
 ---
 
-## 🔌 API Endpoints Summary
+## 🔌 API Endpoints
 
 Base URL: `http://localhost:8080`
 
-* **`POST /api/auth/signup`**
-  * Purpose: Register a new user
-  * Auth Required: No
-
-* **`POST /api/auth/login`**
-  * Purpose: Authenticate and receive a JWT
-  * Auth Required: No
-
-* **`GET /api/tasks`**
-  * Purpose: List the authenticated user's tasks
-  * Auth Required: Yes
-
-* **`GET /api/tasks/{id}`**
-  * Purpose: Retrieve a task by ID, subject to ownership checks
-  * Auth Required: Yes
-
-* **`POST /api/tasks`**
-  * Purpose: Create a new task entry
-  * Auth Required: Yes
-
-* **`PUT /api/tasks/{id}`**
-  * Purpose: Update an existing task, subject to ownership checks
-  * Auth Required: Yes
-
-* **`DELETE /api/tasks/{id}`**
-  * Purpose: Delete a task, subject to ownership checks
-  * Auth Required: Yes
-
-* **`GET /api/progress`**
-  * Purpose: Retrieve productivity statistics for the authenticated user
-  * Auth Required: Yes
-
-* **`GET /api/daily-quote`**
-  * Purpose: Get today's stored motivational quote
-  * Auth Required: Yes, unless the current security configuration explicitly permits this route
-
-* **`GET /api/ai-coach`**
-  * Purpose: Generate AI coaching feedback
-  * Auth Required: Yes
+| Method | Endpoint | Purpose | Authentication |
+|---|---|---|---|
+| POST | `/api/auth/signup` | Register a user | No |
+| POST | `/api/auth/login` | Authenticate and receive a JWT | No |
+| GET | `/api/tasks` | Retrieve the authenticated user's tasks | Yes |
+| GET | `/api/tasks/{id}` | Retrieve a task with ownership checks | Yes |
+| POST | `/api/tasks` | Create a task | Yes |
+| PUT | `/api/tasks/{id}` | Update a task with ownership checks | Yes |
+| DELETE | `/api/tasks/{id}` | Delete a task with ownership checks | Yes |
+| GET | `/api/progress` | Retrieve productivity statistics | Yes |
+| GET | `/api/daily-quote` | Retrieve today's quote | Depends on security configuration |
+| GET | `/api/ai-coach` | Generate AI productivity feedback | Yes |
 
 ---
 
-## 🚦 HTTP Status Code Reference
+## 🚦 HTTP Status Codes
 
-The API uses standard HTTP status codes for successful requests and common errors:
+The API uses standard HTTP status codes for successful requests and common error conditions.
 
-* **`200 OK`** - Request succeeded
-* **`201 Created`** - Resource created successfully (e.g., signup or task creation)
-* **`400 Bad Request`** - Request validation failed; validation responses include `fieldErrors`
-* **`401 Unauthorized`** - Authentication token is missing or invalid, or credentials are invalid
-* **`403 Forbidden`** - Authenticated user lacks permission to access a resource
-* **`404 Not Found`** - Requested resource was not found
-* **`409 Conflict`** - Data conflict, such as duplicate email registration
-* **`500 Internal Server Error`** - Unexpected server-side error; the response uses a generic message for supported exception handling
+| Status | Meaning |
+|---|---|
+| `200 OK` | Request completed successfully |
+| `201 Created` | Resource created successfully |
+| `400 Bad Request` | Invalid request or validation failure |
+| `401 Unauthorized` | Missing/invalid authentication or invalid credentials |
+| `403 Forbidden` | Authenticated user lacks permission |
+| `404 Not Found` | Requested resource was not found |
+| `409 Conflict` | Data conflict, such as duplicate email registration |
+| `429 Too Many Requests` | AI upstream rate limit or application quota rejection, as applicable |
+| `500 Internal Server Error` | Unexpected server-side failure |
+| `503 Service Unavailable` | AI service temporarily unavailable |
+
+Error responses use a structured format for supported exceptions. Application-level AI quota enforcement remains in progress.
 
 ---
 
-## ⚙️ Local Setup & Installation
+## ⚙️ Local Setup and Installation
 
-### 1. Clone the Repository
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/Amjad-khan5598/activity-tracker.git
+git clone https://github.com/ShadowNode12/activity-tracker.git
 cd activity-tracker
 ```
 
-### 2. Configure the Database
+### 2. Create the MySQL database
 
-Create your local MySQL database:
+Create the database in MySQL:
 
 ```sql
 CREATE DATABASE activitytracker;
 ```
 
-### 3. Set Environment Variables
+Flyway manages versioned schema migrations when the application starts. Do not manually recreate tables already managed by migrations.
 
-Set the required environment variables in your local terminal session:
+### 3. Configure environment variables
+
+The application reads database credentials and the JWT secret from environment variables. The Gemini API key is required for AI coaching but should remain optional for starting the rest of the backend.
+
+For Windows Command Prompt:
 
 ```bat
-:: Windows Command Prompt example
 set DB_USERNAME=your_mysql_username
 set DB_PASSWORD=your_mysql_password
 set JWT_SECRET=your_base64_encoded_jwt_secret
 set GEMINI_API_KEY=your_gemini_api_key
 ```
 
-Use your own credentials and a sufficiently strong, Base64-encoded JWT secret. Keep real credentials and API keys out of version control. The environment variables must be available to the terminal session that starts the application.
+Use your own credentials and a sufficiently strong, Base64-encoded JWT secret. Keep actual secrets out of Git and never commit `.env` files containing credentials.
 
-### 4. Run the Application
+These commands configure variables for the current terminal session. Start the application from that same session.
+
+### 4. Run the application
 
 ```bash
 mvn spring-boot:run
 ```
 
----
-
-## 👨‍💻 Author
-
-**Amjad Khan**
-
-* Software Engineering Student & Backend Developer
-* GitHub: [@Amjad-khan5598](https://github.com/Amjad-khan5598)
+### 5. Run automated tests
