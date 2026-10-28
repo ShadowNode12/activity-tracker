@@ -159,6 +159,23 @@ public ResponseEntity<ErrorResponseDTO> handleMethodArgumentNotValidException(
     	            .status(HttpStatus.INTERNAL_SERVER_ERROR)
     	            .body(error);
     } 
+    
+
+    @ExceptionHandler(AIQuotaExceededException.class)
+    public ResponseEntity<ErrorResponseDTO> handleAIQuotaExceededException(
+        AIQuotaExceededException ex) {
+
+    ErrorResponseDTO error = new ErrorResponseDTO(
+            429,
+            "AI_QUOTA_EXCEEDED",
+            ex.getMessage()
+    );
+
+    return ResponseEntity
+            .status(HttpStatus.TOO_MANY_REQUESTS)
+            .body(error);
+    }	
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponseDTO> handleIllegalArgument(
             IllegalArgumentException ex) {
