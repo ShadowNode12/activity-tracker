@@ -1,4 +1,3 @@
-
 package com.example.activitytracker.service;
 
 import com.example.activitytracker.DTO.AICoachResponseDTO;
@@ -58,6 +57,9 @@ class AICoachServiceImplTest {
     @Mock
     private ObjectMapper objectMapper;
 
+    @Mock
+    private AIQuotaService aiQuotaService;
+
     @InjectMocks
     private AICoachServiceImpl aiCoachService;
 
@@ -72,6 +74,7 @@ class AICoachServiceImplTest {
         );
 
         user = new User();
+        user.setId(1L);
         user.setEmail("test@example.com");
 
         when(userRepository.findByEmail("test@example.com"))
@@ -114,6 +117,8 @@ class AICoachServiceImplTest {
                 AIResponseException.class,
                 () -> aiCoachService.getCoaching()
         );
+
+        verify(aiQuotaService).reserveRequest(1L);
     }
 
     @Test
@@ -131,6 +136,8 @@ class AICoachServiceImplTest {
                 AIRateException.class,
                 () -> aiCoachService.getCoaching()
         );
+
+        verify(aiQuotaService).reserveRequest(1L);
     }
 
     @Test
@@ -148,6 +155,8 @@ class AICoachServiceImplTest {
                 AIServiceUnavailableException.class,
                 () -> aiCoachService.getCoaching()
         );
+
+        verify(aiQuotaService).reserveRequest(1L);
     }
 
     @Test
@@ -165,6 +174,8 @@ class AICoachServiceImplTest {
                 AIConfigurationException.class,
                 () -> aiCoachService.getCoaching()
         );
+
+        verify(aiQuotaService).reserveRequest(1L);
     }
 
     @Test
@@ -187,6 +198,8 @@ class AICoachServiceImplTest {
                 AIConfigurationException.class,
                 () -> aiCoachService.getCoaching()
         );
+
+        verify(aiQuotaService).reserveRequest(1L);
     }
 
     @Test
@@ -227,16 +240,13 @@ class AICoachServiceImplTest {
 
         aiCoachService.getCoaching();
 
-        // Progress calculation must receive the full task history.
         verify(progressService).calculateProgress(allTasks);
 
-        // Gemini must receive the bounded task history.
         verify(geminiClientService).generateContent(argThat(prompt ->
                 prompt.contains("Recent task")
                         && !prompt.contains("Older task")
         ));
 
-        // Verify page size and deterministic sorting.
         verify(taskEntryRepository).findByUser(
                 eq(user),
                 argThat((Pageable pageable) ->
@@ -250,6 +260,8 @@ class AICoachServiceImplTest {
                                         == Sort.Direction.DESC
                 )
         );
+
+        verify(aiQuotaService).reserveRequest(1L);
     }
 
     @Test
@@ -317,5 +329,7 @@ class AICoachServiceImplTest {
                 prompt.contains("Task 29"),
                 "Older tasks should be excluded when the limit is reached"
         );
+
+        verify(aiQuotaService).reserveRequest(1L);
     }
 }
