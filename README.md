@@ -182,6 +182,7 @@ The API uses standard HTTP status codes for successful requests and common error
 | `429 Too Many Requests` | AI upstream rate limit or application quota rejection, as applicable |
 | `500 Internal Server Error` | Unexpected server-side failure |
 | `503 Service Unavailable` | AI service temporarily unavailable |
+| `502 Bad Gateway` | Invalid or unsuccessful response from an upstream service, such as Gemini |
 
 Error responses use a structured format for supported exceptions.
 
