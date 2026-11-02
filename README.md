@@ -22,9 +22,10 @@ The project focuses on backend engineering practices, including stateless authen
 - **User-Specific Data Access:** Retrieves personal task data using the authenticated user's identity and applies ownership checks to task operations.
 - **Server-Side AI Integration:** Calls Google Gemini from the backend, keeping the API key out of frontend code.
 - **Bounded AI Context:** Limits detailed task history to the 30 most recent entries and applies a 12,000-character prompt budget to control input size.
+- **AI Request Quotas:** Enforces configurable per-user and global daily limits using atomic database updates.
 - **Centralized Exception Handling:** Uses `@ControllerAdvice` to return structured JSON errors for supported application exceptions.
 - **Database Migrations:** Uses Flyway to version and apply database schema changes.
-- **Automated Testing:** Uses JUnit and Mockito to test service behavior, authentication utilities, error handling, and AI-related logic.
+- **Automated Testing:** Uses JUnit, Mockito, and Spring Boot Test to test service behavior, security utilities, error handling, and database-backed quota behavior.
 
 ---
 
@@ -58,26 +59,48 @@ The project focuses on backend engineering practices, including stateless authen
   - Use aggregate progress statistics and recent task history to build the prompt.
   - Handle Gemini rate limits, authentication/configuration errors, service failures, and malformed responses.
   - Bound detailed task history and prompt size to help control input usage.
-
-- **Testing and Reliability**
-  - Automated tests for authentication, task services, progress calculations, and AI coaching.
-  - Mocked dependencies to test error scenarios without requiring real Gemini API calls.
-  - A passing test suite at the current development checkpoint.
-
-### In Progress
+  - Keep Gemini configuration optional so the backend can start when the AI API key is unavailable.
 
 - **AI Usage Quotas**
-  - MySQL tables and JPA entities for per-user and global daily usage.
-  - Repository interfaces and quota exception handling.
-  - Configurable daily quota limits.
-  - Atomic quota reservations and enforcement under concurrent requests are not yet complete.
+  - Configurable per-user and global daily request limits.
+  - Atomic quota reservation using MySQL updates to help prevent over-limit reservations under concurrent requests.
+  - Transactional quota reservation: if the global quota reservation fails after the user reservation, the transaction rolls back.
+  - Quota tracking persisted in MySQL.
+  - Quota dates calculated using the configured `Asia/Kolkata` time zone.
+
+- **Testing and Reliability**
+  - Automated tests for authentication, task services, progress calculations, AI coaching, and quota behavior.
+  - Mocked dependencies to test AI failure scenarios without making real Gemini API calls.
+  - Integration tests verifying quota persistence and transaction rollback against the test database.
 
 ### Planned
 
 - React frontend integration.
 - Swagger UI / OpenAPI documentation.
 - Production deployment and cloud database configuration.
-- Additional integration and concurrency tests for AI quotas.
+- Further integration and concurrency testing as the application evolves.
+
+---
+
+## 🛡️ AI Coach Quota Policy
+
+The AI Coach uses configurable daily limits to help control API usage and prevent excessive requests.
+
+| Limit | Default |
+|---|---:|
+| Per-user daily limit | 5 requests |
+| Global daily limit | 100 requests |
+| Quota time zone | `Asia/Kolkata` |
+
+### Reservation behavior
+
+- Quota is reserved before the backend sends a request to Gemini.
+- Requests rejected before quota reservation do not consume a quota reservation.
+- Once quota has been reserved, provider failures—such as timeouts, rate limits, or server errors—do **not** automatically refund the reservation.
+- This is intentional: Gemini may have received or processed the request even if the backend did not receive a successful response.
+- User and global quota reservations are handled transactionally. If the global reservation fails, the preceding user reservation is rolled back.
+
+The daily limits and time zone are configurable through application properties.
 
 ---
 
@@ -160,7 +183,7 @@ The API uses standard HTTP status codes for successful requests and common error
 | `500 Internal Server Error` | Unexpected server-side failure |
 | `503 Service Unavailable` | AI service temporarily unavailable |
 
-Error responses use a structured format for supported exceptions. Application-level AI quota enforcement remains in progress.
+Error responses use a structured format for supported exceptions.
 
 ---
 
@@ -185,7 +208,7 @@ Flyway manages versioned schema migrations when the application starts. Do not m
 
 ### 3. Configure environment variables
 
-The application reads database credentials and the JWT secret from environment variables. The Gemini API key is required for AI coaching but should remain optional for starting the rest of the backend.
+The application reads database credentials and the JWT secret from environment variables. The Gemini API key is optional for starting the backend, but is needed to use AI Coach functionality.
 
 For Windows Command Prompt:
 
@@ -207,3 +230,24 @@ mvn spring-boot:run
 ```
 
 ### 5. Run automated tests
+
+```bash
+mvn clean test
+```
+
+Make sure your MySQL test database and required environment variables are configured according to the test configuration before running integration tests.
+
+---
+
+## 👤 Author
+
+**ShadowNode12**
+
+- GitHub: [@ShadowNode12](https://github.com/ShadowNode12)
+- Repository: [Daily Activity Tracker](https://github.com/ShadowNode12/activity-tracker)
+
+---
+
+## 📌 Project Status
+
+This project is under active development. The backend currently includes authentication, task management, productivity analytics, daily quotes, AI coaching, and AI quota enforcement. Frontend integration and deployment are planned next.
