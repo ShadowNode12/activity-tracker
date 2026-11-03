@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.errors.ApiException;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,6 +26,8 @@ import org.springframework.data.domain.Sort;
 
 @Service
 public class AICoachServiceImpl implements AICoachService {
+
+    private static final int MAX_PROMPT_CHARS = 12_000;
 
     private final GeminiClientService geminiClientService;
     private final ProgressService progressService;
@@ -79,10 +82,10 @@ public class AICoachServiceImpl implements AICoachService {
 
         String prompt = buildPrompt(progress, recentTasks);
 
-        String response;
-
-        // Reserve the user's and global AI quota before calling Gemini.
+        // Reserve quota before calling Gemini.
         aiQuotaService.reserveRequest(user.getId());
+
+        String response;
 
         try {
             response = geminiClientService.generateContent(prompt);
@@ -113,19 +116,47 @@ public class AICoachServiceImpl implements AICoachService {
             throw e;
         }
 
-        try {
-            return objectMapper.readValue(
-                    response,
-                    AICoachResponseDTO.class
+        if (response == null || response.isBlank()) {
+            throw new AIResponseException(
+                    "Gemini returned an empty response",
+                    new IllegalStateException(
+                            "Gemini response was null or blank")
             );
+        }
+
+        try {
+            AICoachResponseDTO coachResponse =
+                    objectMapper.readValue(
+                            response,
+                            AICoachResponseDTO.class
+                    );
+
+            if (coachResponse == null
+                    || isBlank(coachResponse.getSummary())
+                    || isBlank(coachResponse.getFeedback())
+                    || isBlank(coachResponse.getSuggestion())
+                    || isBlank(coachResponse.getMotivation())) {
+
+                throw new AIResponseException(
+                        "Gemini returned an incomplete response",
+                        new IllegalStateException(
+                                "One or more required fields are missing")
+                );
+            }
+
+            return coachResponse;
 
         } catch (JsonProcessingException e) {
             throw new AIResponseException(
-                    "Gemini returned an invalid response", e);
+                    "Gemini returned an invalid response",
+                    e
+            );
         }
     }
 
-    private static final int MAX_PROMPT_CHARS = 12_000;
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
 
     private String buildPrompt(
             ProgressResponseDTO progress,
@@ -151,7 +182,10 @@ public class AICoachServiceImpl implements AICoachService {
                 .append("\n");
 
         prompt.append("Completion rate: ")
-                .append(String.format("%.2f", progress.getCompletionRate()))
+                .append(String.format(
+                        Locale.ROOT,
+                        "%.2f",
+                        progress.getCompletionRate()))
                 .append("%\n");
 
         prompt.append("Current streak: ")

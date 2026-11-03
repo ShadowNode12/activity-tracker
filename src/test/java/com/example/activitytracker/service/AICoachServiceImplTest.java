@@ -13,7 +13,7 @@ import com.example.activitytracker.repository.UserRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.errors.ApiException;
-
+import org.mockito.ArgumentMatchers;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,6 +86,15 @@ class AICoachServiceImplTest {
         SecurityContextHolder.clearContext();
     }
 
+    private AICoachResponseDTO validCoachResponse() {
+        AICoachResponseDTO response = new AICoachResponseDTO();
+        response.setSummary("Summary");
+        response.setFeedback("Feedback");
+        response.setSuggestion("Suggestion");
+        response.setMotivation("Motivation");
+        return response;
+    }
+
     private void stubEmptyTaskHistory() {
         when(taskEntryRepository.findByUser(user))
                 .thenReturn(List.of());
@@ -112,6 +121,52 @@ class AICoachServiceImplTest {
                 anyString(),
                 eq(AICoachResponseDTO.class)
         )).thenThrow(new JsonProcessingException("Invalid JSON") {});
+
+        assertThrows(
+                AIResponseException.class,
+                () -> aiCoachService.getCoaching()
+        );
+
+        verify(aiQuotaService).reserveRequest(1L);
+    }
+
+    @Test
+    void shouldThrowAIResponseExceptionWhenGeminiReturnsEmptyResponse() {
+
+        stubEmptyTaskHistory();
+
+        when(geminiClientService.generateContent(anyString()))
+                .thenReturn("");
+
+        assertThrows(
+                AIResponseException.class,
+                () -> aiCoachService.getCoaching()
+        );
+
+       
+        verify(aiQuotaService).reserveRequest(1L);
+    }
+
+    @Test
+    void shouldThrowAIResponseExceptionWhenGeminiReturnsIncompleteResponse()
+            throws Exception {
+
+        stubEmptyTaskHistory();
+
+        when(geminiClientService.generateContent(anyString()))
+                .thenReturn("""
+                        {
+                          "summary": "Summary"
+                        }
+                        """);
+
+        AICoachResponseDTO incompleteResponse = new AICoachResponseDTO();
+        incompleteResponse.setSummary("Summary");
+
+        when(objectMapper.readValue(
+                anyString(),
+                eq(AICoachResponseDTO.class)
+        )).thenReturn(incompleteResponse);
 
         assertThrows(
                 AIResponseException.class,
@@ -227,16 +282,19 @@ class AICoachServiceImplTest {
                 .thenReturn(new ProgressResponseDTO());
 
         when(geminiClientService.generateContent(anyString()))
-                .thenReturn(
-                        "{\"summary\":\"Summary\",\"feedback\":\"Feedback\","
-                                + "\"suggestion\":\"Suggestion\","
-                                + "\"motivation\":\"Motivation\"}"
-                );
+                .thenReturn("""
+                        {
+                          "summary": "Summary",
+                          "feedback": "Feedback",
+                          "suggestion": "Suggestion",
+                          "motivation": "Motivation"
+                        }
+                        """);
 
         when(objectMapper.readValue(
                 anyString(),
                 eq(AICoachResponseDTO.class)
-        )).thenReturn(new AICoachResponseDTO());
+        )).thenReturn(validCoachResponse());
 
         aiCoachService.getCoaching();
 
@@ -303,7 +361,7 @@ class AICoachServiceImplTest {
         when(objectMapper.readValue(
                 anyString(),
                 eq(AICoachResponseDTO.class)
-        )).thenReturn(new AICoachResponseDTO());
+        )).thenReturn(validCoachResponse());
 
         aiCoachService.getCoaching();
 
