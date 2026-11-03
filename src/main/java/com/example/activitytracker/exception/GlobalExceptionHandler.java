@@ -186,4 +186,15 @@ public ResponseEntity<ErrorResponseDTO> handleMethodArgumentNotValidException(
                 ex.getMessage()
         );
     }
+    
+    @ExceptionHandler(DailyQuoteNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleDailyQuoteNotFoundException(
+            DailyQuoteNotFoundException ex) {
+
+        return buildError(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "DAILY_QUOTE_UNAVAILABLE",
+                ex.getMessage()
+        );
+    }
 }

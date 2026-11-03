@@ -1,15 +1,19 @@
 package com.example.activitytracker.service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.example.activitytracker.exception.DailyQuoteNotFoundException;
 import com.example.activitytracker.model.DailyQuote;
 import com.example.activitytracker.repository.DailyQuoteRepository;
 
 @Service
 public class DailyQuoteServiceImpl implements DailyQuoteService {
+
+    private static final ZoneId APP_ZONE = ZoneId.of("Asia/Kolkata");
 
     private final DailyQuoteRepository dailyQuoteRepository;
 
@@ -20,15 +24,15 @@ public class DailyQuoteServiceImpl implements DailyQuoteService {
     @Override
     public DailyQuote getDailyQuote() {
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(APP_ZONE);
 
         Optional<DailyQuote> existingQuote =
                 dailyQuoteRepository.findByDate(today);
 
-        if (existingQuote.isPresent()) {
-            return existingQuote.get();
-        }
-
-        throw new RuntimeException("Today's quote has not been generated yet");
+        return existingQuote.orElseThrow(() ->
+                new DailyQuoteNotFoundException(
+                        "Today's daily quote is not available."
+                )
+        );
     }
 }

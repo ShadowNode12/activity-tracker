@@ -1,6 +1,7 @@
 package com.example.activitytracker.config;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Random;
 
@@ -33,10 +34,10 @@ public class DailyQuoteScheduler {
         generateDailyQuote();
     }
 
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Kolkata")
     public void generateDailyQuote() {
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
 
         if (dailyQuoteRepository.findByDate(today).isPresent()) {
             return;
