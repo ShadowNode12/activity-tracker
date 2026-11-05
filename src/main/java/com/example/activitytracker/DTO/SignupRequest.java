@@ -7,15 +7,16 @@ import lombok.Data;
 
 @Data
 public class SignupRequest {
-	@NotBlank
-	private String name;
 
-	@NotBlank
-	@Email
-	private String email;
+    @NotBlank(message = "Name is required")
+    private String name;
 
-	@Size(min = 8, max = 72,
-		      message = "Password must be between 8 and 72 characters")
-	private String password;
+    @NotBlank(message = "Email is required")
+    @Email(message = "Please provide a valid email address")
+    private String email;
 
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, max = 72,
+          message = "Password must be between 8 and 72 characters")
+    private String password;
 }
