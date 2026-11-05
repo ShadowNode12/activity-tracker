@@ -38,7 +38,7 @@ public class AIQuotaServiceImpl implements AIQuotaService {
     @Transactional
     public void reserveRequest(Long userId) {
         if (userId == null) {
-            throw new IllegalArgumentException("User ID must not be null");
+            throw new IllegalStateException("User ID must not be null when reserving AI quota");
         }
 
         LocalDate today = LocalDate.now(quotaZone);

@@ -110,7 +110,7 @@ class AIQuotaServiceImplTest {
     @Test
     void shouldRejectNullUserId() {
         assertThrows(
-                IllegalArgumentException.class,
+                IllegalStateException.class,
                 () -> aiQuotaService.reserveRequest(null)
         );
 
