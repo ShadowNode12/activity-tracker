@@ -1,4 +1,3 @@
-
 package com.example.activitytracker.service;
 
 import com.example.activitytracker.DTO.ProgressResponseDTO;
@@ -20,6 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +28,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ProgressServiceImplTest {
+
+    private static final ZoneId APP_ZONE =
+            ZoneId.of("Asia/Kolkata");
 
     @Mock
     private TaskEntryRepository taskEntryRepository;
@@ -62,7 +65,7 @@ class ProgressServiceImplTest {
 
     @Test
     void shouldCalculateTaskStatisticsCorrectly() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(APP_ZONE);
 
         List<TaskEntry> tasks = List.of(
                 createTask(today, true),
@@ -101,7 +104,7 @@ class ProgressServiceImplTest {
 
     @Test
     void shouldCalculateConsecutiveCompletionStreak() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(APP_ZONE);
 
         List<TaskEntry> tasks = List.of(
                 createTask(today, true),
@@ -119,8 +122,8 @@ class ProgressServiceImplTest {
     }
 
     @Test
-    void shouldReturnZeroStreakWhenNoTaskWasCompletedToday() {
-        LocalDate today = LocalDate.now();
+    void shouldPreserveStreakWhenTodayIsIncompleteButYesterdayWasCompleted() {
+        LocalDate today = LocalDate.now(APP_ZONE);
 
         List<TaskEntry> tasks = List.of(
                 createTask(today.minusDays(1), true),
@@ -132,7 +135,61 @@ class ProgressServiceImplTest {
 
         ProgressResponseDTO result = progressService.getProgress();
 
+        assertEquals(2, result.getCurrentStreak());
+    }
+
+    @Test
+    void shouldResetStreakWhenYesterdayWasMissed() {
+        LocalDate today = LocalDate.now(APP_ZONE);
+
+        List<TaskEntry> tasks = List.of(
+                createTask(today.minusDays(2), true),
+                createTask(today.minusDays(3), true)
+        );
+
+        when(taskEntryRepository.findByUser(user))
+                .thenReturn(tasks);
+
+        ProgressResponseDTO result = progressService.getProgress();
+
         assertEquals(0, result.getCurrentStreak());
+    }
+
+    @Test
+    void shouldRestartStreakAtOneWhenCompletedTodayAfterGap() {
+        LocalDate today = LocalDate.now(APP_ZONE);
+
+        List<TaskEntry> tasks = List.of(
+                createTask(today, true),
+                createTask(today.minusDays(2), true),
+                createTask(today.minusDays(3), true)
+        );
+
+        when(taskEntryRepository.findByUser(user))
+                .thenReturn(tasks);
+
+        ProgressResponseDTO result = progressService.getProgress();
+
+        assertEquals(1, result.getCurrentStreak());
+    }
+
+    @Test
+    void shouldCountMultipleCompletedTasksOnSameDateAsOneStreakDay() {
+        LocalDate today = LocalDate.now(APP_ZONE);
+
+        List<TaskEntry> tasks = List.of(
+                createTask(today, true),
+                createTask(today, true),
+                createTask(today, true),
+                createTask(today.minusDays(1), true)
+        );
+
+        when(taskEntryRepository.findByUser(user))
+                .thenReturn(tasks);
+
+        ProgressResponseDTO result = progressService.getProgress();
+
+        assertEquals(2, result.getCurrentStreak());
     }
 
     private TaskEntry createTask(LocalDate date, boolean completed) {
