@@ -1,31 +1,33 @@
 # Daily Activity Tracker 🚀
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=openjdk" alt="Java 21 target">
-  <img src="https://img.shields.io/badge/Spring_Boot-4.1.1-brightgreen?style=for-the-badge&logo=springboot" alt="Spring Boot 4.1.1">
-  <img src="https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql" alt="MySQL 8.0">
+  <img src="https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=openjdk" alt="Java 21">
+  <img src="https://img.shields.io/badge/Spring_Boot-4.1.1-brightgreen?style=for-the-badge&logo=springboot" alt="Spring Boot">
+  <img src="https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql" alt="MySQL">
   <img src="https://img.shields.io/badge/Security-JWT_%26_BCrypt-red?style=for-the-badge&logo=jsonwebtokens" alt="JWT and BCrypt">
   <img src="https://img.shields.io/badge/AI-Google_Gemini-purple?style=for-the-badge&logo=google" alt="Google Gemini">
   <img src="https://img.shields.io/badge/Build-Maven-C71A36?style=for-the-badge&logo=apachemaven" alt="Maven">
 </p>
 
-Daily Activity Tracker is a productivity application backend built with Java and Spring Boot. It allows users to manage daily tasks, monitor productivity, view motivational quotes, and receive AI-generated coaching based on their progress.
+Daily Activity Tracker is a productivity application designed to help users manage daily tasks, monitor their progress, maintain consistency, and receive AI-generated productivity coaching.
 
-The project focuses on backend engineering practices, including stateless authentication, database-backed persistence, input validation, centralized exception handling, automated testing, and external AI integration.
+The backend is built using Java and Spring Boot, with MySQL for persistence and Google Gemini for AI-powered coaching.
+
+The project emphasizes backend engineering practices such as stateless authentication, user-specific data access, database migrations, input validation, centralized exception handling, automated testing, and controlled AI API usage.
 
 ---
 
-## 🏛️ Core Architectural Highlights
+## 🏛️ Architecture Highlights
 
-- **Layered Architecture:** Separates controllers, services, repositories, entities, DTOs, security, and exception handling.
-- **Stateless Authentication:** Uses JSON Web Tokens (JWT) for authentication and BCrypt for password hashing.
-- **User-Specific Data Access:** Retrieves personal task data using the authenticated user's identity and applies ownership checks to task operations.
-- **Server-Side AI Integration:** Calls Google Gemini from the backend, keeping the API key out of frontend code.
-- **Bounded AI Context:** Limits detailed task history to the 30 most recent entries and applies a 12,000-character prompt budget to control input size.
-- **AI Request Quotas:** Enforces configurable per-user and global daily limits using atomic database updates.
-- **Centralized Exception Handling:** Uses `@ControllerAdvice` to return structured JSON errors for supported application exceptions.
-- **Database Migrations:** Uses Flyway to version and apply database schema changes.
-- **Automated Testing:** Uses JUnit, Mockito, and Spring Boot Test to test service behavior, security utilities, error handling, and database-backed quota behavior.
+- **Layered architecture:** Separates controllers, services, repositories, entities, DTOs, security, and exception handling.
+- **JWT authentication:** Stateless authentication using JSON Web Tokens and BCrypt password hashing.
+- **User-specific data access:** Task operations enforce ownership based on the authenticated user.
+- **Server-side AI integration:** Gemini API calls are handled by the backend; API keys are not exposed to frontend code.
+- **Bounded AI context:** Uses recent task history and a prompt-size budget to control AI input.
+- **Centralized exception handling:** Returns structured error responses for supported application exceptions.
+- **Database migrations:** Flyway manages versioned database schema changes.
+- **AI usage protection:** Database-backed daily quotas help control per-user and global Gemini API usage.
+- **Automated testing:** JUnit, Mockito, and Spring Boot Test cover service logic, security utilities, and AI quota behavior.
 
 ---
 
@@ -33,58 +35,58 @@ The project focuses on backend engineering practices, including stateless authen
 
 ### Implemented
 
-- **User Authentication**
-  - User signup and login.
-  - BCrypt password hashing.
-  - JWT generation and authentication.
-  - Duplicate email handling with `409 Conflict`.
+#### User Authentication
+- User signup and login.
+- BCrypt password hashing.
+- JWT generation and authentication.
+- Duplicate email handling.
+- Protected endpoints requiring authentication.
 
-- **Daily Task Management**
-  - Create, retrieve, update, and delete tasks.
-  - Store task dates, descriptions, and completion status.
-  - Enforce user-specific task access.
+#### Daily Task Management
+- Create, retrieve, update, and delete tasks.
+- Store task dates, descriptions, and completion status.
+- Enforce user-specific task access.
+- Validate incoming task requests.
 
-- **Progress Analytics**
-  - Calculate total and completed tasks.
-  - Calculate completion rate and daily progress.
-  - Track the current productivity streak.
+#### Progress Analytics
+- Calculate total and completed tasks.
+- Calculate completion rate and daily progress.
+- Track productivity streaks.
 
-- **Daily Quote Engine**
-  - Store and retrieve motivational quotes.
-  - Maintain a daily quote through scheduled processing.
+#### Daily Quote Engine
+- Store and retrieve motivational quotes.
+- Maintain a shared daily quote.
+- Generate the daily quote through scheduled processing.
+- Ensure today's quote is available when the application starts.
 
-- **AI Productivity Coach**
-  - Integrate Google Gemini through the backend.
-  - Generate structured coaching responses containing `summary`, `feedback`, `suggestion`, and `motivation`.
-  - Use aggregate progress statistics and recent task history to build the prompt.
-  - Handle Gemini rate limits, authentication/configuration errors, service failures, and malformed responses.
-  - Bound detailed task history and prompt size to help control input usage.
-  - Keep Gemini configuration optional so the backend can start when the AI API key is unavailable.
+#### AI Productivity Coach
+- Integrate Google Gemini through the backend.
+- Generate structured coaching responses containing:
+  - `summary`
+  - `feedback`
+  - `suggestion`
+  - `motivation`
+- Use productivity statistics and recent task history as AI context.
+- Handle AI provider errors and malformed responses.
+- Keep Gemini configuration optional so the backend can start without an API key.
 
-- **AI Usage Quotas**
-  - Configurable per-user and global daily request limits.
-  - Atomic quota reservation using MySQL updates to help prevent over-limit reservations under concurrent requests.
-  - Transactional quota reservation: if the global quota reservation fails after the user reservation, the transaction rolls back.
-  - Quota tracking persisted in MySQL.
-  - Quota dates calculated using the configured `Asia/Kolkata` time zone.
+#### AI Usage Quotas
+- Configurable per-user and global daily request limits.
+- Atomic database quota reservation.
+- Transactional reservation to prevent partial quota consumption when reservation fails.
+- Persistent quota tracking.
+- Daily quota reset based on the configured `Asia/Kolkata` time zone.
 
-- **Testing and Reliability**
-  - Automated tests for authentication, task services, progress calculations, AI coaching, and quota behavior.
-  - Mocked dependencies to test AI failure scenarios without making real Gemini API calls.
-  - Integration tests verifying quota persistence and transaction rollback against the test database.
-
-### Planned
-
-- React frontend integration.
-- Swagger UI / OpenAPI documentation.
-- Production deployment and cloud database configuration.
-- Further integration and concurrency testing as the application evolves.
+#### Testing and Reliability
+- Automated tests for authentication, task management, progress calculations, AI coaching, and quota behavior.
+- Mocked AI dependencies to test failure scenarios without making real Gemini API calls.
+- Integration tests for database-backed quota behavior and transaction rollback.
 
 ---
 
 ## 🛡️ AI Coach Quota Policy
 
-The AI Coach uses configurable daily limits to help control API usage and prevent excessive requests.
+The AI Coach uses daily limits to control API usage and help prevent excessive requests.
 
 | Limit | Default |
 |---|---:|
@@ -92,15 +94,16 @@ The AI Coach uses configurable daily limits to help control API usage and preven
 | Global daily limit | 100 requests |
 | Quota time zone | `Asia/Kolkata` |
 
-### Reservation behavior
+### Quota reservation behavior
 
-- Quota is reserved before the backend sends a request to Gemini.
-- Requests rejected before quota reservation do not consume a quota reservation.
-- Once quota has been reserved, provider failures—such as timeouts, rate limits, or server errors—do **not** automatically refund the reservation.
-- This is intentional: Gemini may have received or processed the request even if the backend did not receive a successful response.
-- User and global quota reservations are handled transactionally. If the global reservation fails, the preceding user reservation is rolled back.
+- Quota is reserved before sending a request to Gemini.
+- Requests rejected before quota reservation do not consume a reservation.
+- Once reserved, a quota is **not automatically refunded** if Gemini fails, times out, or returns an error.
+- This policy accounts for cases where Gemini may have received or processed the request even if the backend did not receive a successful response.
+- User and global quota reservations are handled transactionally.
+- If global quota reservation fails, the preceding user reservation is rolled back.
 
-The daily limits and time zone are configurable through application properties.
+Quota limits and the time zone are configurable through application properties.
 
 ---
 
@@ -110,19 +113,19 @@ The daily limits and time zone are configurable through application properties.
 |---|---|
 | Language | Java 21 compilation target |
 | Framework | Spring Boot 4.1.1 |
-| Web | Spring Web, REST APIs |
+| Web | Spring WebMVC, REST APIs |
 | Security | Spring Security, JWT, BCrypt |
-| Database | MySQL 8.0 |
+| Database | MySQL 8 |
 | Persistence | Spring Data JPA, Hibernate |
-| Schema migrations | Flyway |
+| Database migrations | Flyway |
 | Validation | Jakarta Bean Validation |
 | JSON processing | Jackson |
-| AI integration | Google GenAI Java SDK with Gemini |
+| AI integration | Google GenAI Java SDK, Gemini |
 | Testing | JUnit, Mockito, Spring Boot Test |
 | Build tool | Maven |
 | API testing | Postman |
 
-The project has also been tested with Java 24 as the runtime while compiling against the Java 21 target.
+The project has been tested locally with Java 24 as the runtime while targeting Java 21 for compilation.
 
 ---
 
@@ -130,65 +133,81 @@ The project has also been tested with Java 24 as the runtime while compiling aga
 
 ```text
 src/main/java/com/example/activitytracker/
-├── config/          # Gemini configuration, quote seeding and scheduling
+├── config/          # Application configuration and scheduling
 ├── controller/      # REST API controllers
-├── DTO/             # Request and response data-transfer objects
+├── DTO/             # Request and response DTOs
 ├── exception/       # Custom exceptions and global exception handling
-├── model/           # JPA entities, including AI usage records
+├── model/           # JPA entities
 ├── repository/      # Spring Data JPA repositories
-├── security/        # JWT authentication filter and security configuration
+├── security/        # JWT authentication and security configuration
 ├── service/         # Business logic and service interfaces
 └── util/            # JWT utilities
 
 src/main/resources/
 ├── application.properties
-└── db/migration/    # Versioned Flyway SQL migrations
+└── db/migration/    # Flyway SQL migrations
 ```
 
 ---
 
 ## 🔌 API Endpoints
 
-Base URL: `http://localhost:8080`
+Base URL:
 
-| Method | Endpoint | Purpose | Authentication |
-|---|---|---|---|
-| POST | `/api/auth/signup` | Register a user | No |
-| POST | `/api/auth/login` | Authenticate and receive a JWT | No |
-| GET | `/api/tasks` | Retrieve the authenticated user's tasks | Yes |
-| GET | `/api/tasks/{id}` | Retrieve a task with ownership checks | Yes |
-| POST | `/api/tasks` | Create a task | Yes |
-| PUT | `/api/tasks/{id}` | Update a task with ownership checks | Yes |
-| DELETE | `/api/tasks/{id}` | Delete a task with ownership checks | Yes |
-| GET | `/api/progress` | Retrieve productivity statistics | Yes |
-| GET | `/api/daily-quote` | Retrieve today's quote | Depends on security configuration |
-| GET | `/api/ai-coach` | Generate AI productivity feedback | Yes |
+```text
+http://localhost:8080
+```
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/signup` | Register a user |
+| POST | `/api/auth/login` | Login and receive a JWT |
+| GET | `/api/tasks` | Retrieve the authenticated user's tasks |
+| GET | `/api/tasks/{id}` | Retrieve a task |
+| POST | `/api/tasks` | Create a task |
+| PUT | `/api/tasks/{id}` | Update a task |
+| DELETE | `/api/tasks/{id}` | Delete a task |
+| GET | `/api/progress` | Retrieve productivity statistics |
+| GET | `/api/daily-quote` | Retrieve today's motivational quote |
+| GET | `/api/ai-coach` | Generate AI productivity coaching |
+
+Protected endpoints require a valid JWT in the Authorization header:
+
+```http
+Authorization: Bearer <your_jwt_token>
+```
 
 ---
 
 ## 🚦 HTTP Status Codes
 
-The API uses standard HTTP status codes for successful requests and common error conditions.
-
 | Status | Meaning |
 |---|---|
 | `200 OK` | Request completed successfully |
 | `201 Created` | Resource created successfully |
+| `204 No Content` | Resource deleted successfully |
 | `400 Bad Request` | Invalid request or validation failure |
-| `401 Unauthorized` | Missing/invalid authentication or invalid credentials |
-| `403 Forbidden` | Authenticated user lacks permission |
-| `404 Not Found` | Requested resource was not found |
-| `409 Conflict` | Data conflict, such as duplicate email registration |
-| `429 Too Many Requests` | AI upstream rate limit or application quota rejection, as applicable |
+| `401 Unauthorized` | Missing or invalid authentication |
+| `403 Forbidden` | Access denied |
+| `404 Not Found` | Resource not found |
+| `409 Conflict` | Conflict, such as duplicate email registration |
+| `429 Too Many Requests` | AI quota exceeded or upstream rate limit |
 | `500 Internal Server Error` | Unexpected server-side failure |
+| `502 Bad Gateway` | Invalid or unsuccessful upstream response |
 | `503 Service Unavailable` | AI service temporarily unavailable |
-| `502 Bad Gateway` | Invalid or unsuccessful response from an upstream service, such as Gemini |
 
-Error responses use a structured format for supported exceptions.
+Supported errors use a structured JSON response.
 
 ---
 
 ## ⚙️ Local Setup and Installation
+
+### Prerequisites
+
+- Java 21 or compatible JDK
+- Maven
+- MySQL 8
+- Google Gemini API key (optional; required for AI Coach functionality)
 
 ### 1. Clone the repository
 
@@ -199,17 +218,15 @@ cd activity-tracker
 
 ### 2. Create the MySQL database
 
-Create the database in MySQL:
-
 ```sql
 CREATE DATABASE activitytracker;
 ```
 
-Flyway manages versioned schema migrations when the application starts. Do not manually recreate tables already managed by migrations.
+Flyway manages the schema migrations when the application starts.
 
 ### 3. Configure environment variables
 
-The application reads database credentials and the JWT secret from environment variables. The Gemini API key is optional for starting the backend, but is needed to use AI Coach functionality.
+The application uses environment variables for database credentials and JWT configuration.
 
 For Windows Command Prompt:
 
@@ -220,14 +237,23 @@ set JWT_SECRET=your_base64_encoded_jwt_secret
 set GEMINI_API_KEY=your_gemini_api_key
 ```
 
-Use your own credentials and a sufficiently strong, Base64-encoded JWT secret. Keep actual secrets out of Git and never commit `.env` files containing credentials.
+- Use your own MySQL credentials.
+- Configure a strong Base64-encoded JWT secret.
+- `GEMINI_API_KEY` is optional for application startup.
+- Keep real credentials and API keys out of source control.
 
-These commands configure variables for the current terminal session. Start the application from that same session.
+These commands configure variables for the current terminal session. Start the application from that same terminal.
 
 ### 4. Run the application
 
 ```bash
 mvn spring-boot:run
+```
+
+The backend starts on:
+
+```text
+http://localhost:8080
 ```
 
 ### 5. Run automated tests
@@ -236,7 +262,49 @@ mvn spring-boot:run
 mvn clean test
 ```
 
-Make sure your MySQL test database and required environment variables are configured according to the test configuration before running integration tests.
+The test suite includes unit tests and database-backed integration tests. Configure the test database as required by the test profile.
+
+### 6. Package the application
+
+```bash
+mvn package
+```
+
+The executable Spring Boot JAR is generated under:
+
+```text
+target/activitytracker-0.0.1-SNAPSHOT.jar
+```
+
+Run the packaged application:
+
+```bash
+java -jar target/activitytracker-0.0.1-SNAPSHOT.jar
+```
+
+---
+
+## 🧪 Current Verification
+
+The backend has been locally verified with:
+
+- **41 automated tests passing**
+- Successful Maven packaging
+- Successful executable JAR startup
+- Spring Boot running on port `8080`
+- Flyway migrations applied successfully during application startup
+
+---
+
+## 📌 Project Status
+
+The backend currently includes authentication, task management, progress analytics, daily quotes, AI coaching, AI quota enforcement, and automated testing.
+
+### Next milestones
+- React frontend integration.
+- Swagger / OpenAPI documentation.
+- Production deployment.
+- Further integration and concurrency testing.
 
 ---
 
@@ -249,6 +317,4 @@ Make sure your MySQL test database and required environment variables are config
 
 ---
 
-## 📌 Project Status
-
-This project is under active development. The backend currently includes authentication, task management, productivity analytics, daily quotes, AI coaching, and AI quota enforcement. Frontend integration and deployment are planned next.
+*This project is under active development.*
